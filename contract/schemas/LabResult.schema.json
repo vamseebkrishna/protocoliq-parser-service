@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "LabResult.schema.json",
+  "title": "LabResult",
+  "description": "Laboratory result for eligibility evaluation.",
+  "type": "object",
+  "required": ["name", "value"],
+  "properties": {
+    "name": { "type": "string" },
+    "value": { "type": "number" },
+    "unit": { "type": "string" },
+    "collectedAtUtc": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

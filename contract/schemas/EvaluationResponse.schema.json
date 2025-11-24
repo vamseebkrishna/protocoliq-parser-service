@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "EvaluationResponse.schema.json",
+  "title": "EvaluationResponse",
+  "description": "Eligibility result returned by the engine.",
+  "type": "object",
+  "required": ["eligible", "passedCriteria", "failedCriteria"],
+  "properties": {
+    "evaluationId": { "type": "string" },
+    "tenantId": { "type": "string" },
+    "patientId": { "type": "string" },
+    "rulesetId": { "type": "string" },
+    "rulesetVersion": { "type": "integer" },
+    "eligible": { "type": "boolean" },
+    "passedCriteria": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "failedCriteria": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "explanation": { "type": "string" },
+    "evaluatedAtUtc": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ParseProtocolRequest.schema.json",
+  "title": "ParseProtocolRequest",
+  "type": "object",
+  "required": ["protocolId", "rawText"],
+  "properties": {
+    "protocolId": { "type": "string" },
+    "rawText": { "type": "string" },
+    "options": {
+      "type": "object",
+      "properties": {
+        "language": { "type": "string" },
+        "maxTokens": { "type": "integer" }
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ParseProtocolResponse.schema.json",
+  "title": "ParseProtocolResponse",
+  "type": "object",
+  "required": ["ruleset"],
+  "properties": {
+    "ruleset": { "$ref": "RuleSet.schema.json" }
+  }
+}

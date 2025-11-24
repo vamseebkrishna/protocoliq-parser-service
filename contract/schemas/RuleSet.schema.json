@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "RuleSet.schema.json",
+  "title": "RuleSet",
+  "description": "Structured set of eligibility rules generated from a protocol.",
+  "type": "object",
+  "required": ["rulesetId", "tenantId", "protocolId", "version", "inclusion", "exclusion"],
+  "properties": {
+    "rulesetId": { "type": "string" },
+    "tenantId": { "type": "string" },
+    "protocolId": { "type": "string" },
+    "version": { "type": "integer" },
+    "modelVersion": { "type": "string" },
+    "createdAtUtc": { "type": "string", "format": "date-time" },
+    "inclusion": {
+      "type": "array",
+      "items": { "$ref": "Rule.schema.json" }
+    },
+    "exclusion": {
+      "type": "array",
+      "items": { "$ref": "Rule.schema.json" }
+    }
+  }
+}

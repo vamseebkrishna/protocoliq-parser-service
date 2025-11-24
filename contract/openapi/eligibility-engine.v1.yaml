@@ -1,0 +1,390 @@
+openapi: 3.0.3
+info:
+  title: AI Eligibility Engine API
+  description: >
+    API contract for the AI Eligibility Engine MVP.
+    Provides protocol parsing, eligibility ruleset generation, and patient
+    evaluation endpoints for integration with CTMS, EDC, RTSM, feasibility,
+    and recruitment systems.
+  version: 1.0.0
+  contact:
+    name: ProtocolIQ Eligibility Engine
+servers:
+  - url: https://api.eligibilityengine.com/api/v1
+    description: Production
+  - url: https://sandbox.eligibilityengine.com/api/v1
+    description: Sandbox
+
+tags:
+  - name: Rulesets
+    description: Protocol parsing and ruleset operations.
+  - name: Evaluation
+    description: Patient eligibility evaluation.
+
+paths:
+
+  /rulesets:parseProtocol:
+    post:
+      tags: [Rulesets]
+      summary: Parse protocol text and generate a structured eligibility ruleset.
+      operationId: parseProtocol
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: header
+          name: X-Tenant-Id
+          required: true
+          schema:
+            type: string
+          description: Tenant identifier for multi-tenant isolation.
+        - in: header
+          name: X-Correlation-Id
+          required: false
+          schema:
+            type: string
+          description: Optional correlation ID for tracing.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ParseProtocolRequest"
+      responses:
+        "200":
+          description: Successfully parsed protocol into a ruleset.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParseProtocolResponse"
+        "400":
+          description: Invalid input or malformed protocol text.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /rulesets/{rulesetId}:
+    get:
+      tags: [Rulesets]
+      summary: Retrieve a previously generated ruleset by ID.
+      operationId: getRuleset
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: rulesetId
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: X-Tenant-Id
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: X-Correlation-Id
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Retrieved ruleset.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RuleSet"
+        "404":
+          description: Ruleset not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /evaluations:
+    post:
+      tags: [Evaluation]
+      summary: Evaluate patient data against a ruleset.
+      operationId: evaluatePatient
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: header
+          name: X-Tenant-Id
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: X-Correlation-Id
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EvaluationRequest"
+      responses:
+        "200":
+          description: Eligibility evaluation result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvaluationResponse"
+        "400":
+          description: Invalid patient input or missing fields.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Ruleset not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+
+  schemas:
+
+    ParseProtocolRequest:
+      type: object
+      required: [protocolId, rawText]
+      properties:
+        protocolId:
+          type: string
+          description: Sponsor or system protocol identifier.
+        rawText:
+          type: string
+          description: Full extracted text of the clinical trial protocol.
+        options:
+          type: object
+          description: Optional parsing options.
+          properties:
+            language:
+              type: string
+              default: "en"
+            maxTokens:
+              type: integer
+              minimum: 500
+
+    ParseProtocolResponse:
+      type: object
+      required: [ruleset]
+      properties:
+        ruleset:
+          $ref: "#/components/schemas/RuleSet"
+
+    RuleSet:
+      type: object
+      required: [rulesetId, tenantId, protocolId, version, inclusion, exclusion]
+      properties:
+        rulesetId:
+          type: string
+        tenantId:
+          type: string
+        protocolId:
+          type: string
+        version:
+          type: integer
+          description: Version of this ruleset for the given protocol.
+        modelVersion:
+          type: string
+          description: LLM/model version used to generate this ruleset.
+        createdAtUtc:
+          type: string
+          format: date-time
+        inclusion:
+          type: array
+          items:
+            $ref: "#/components/schemas/Rule"
+        exclusion:
+          type: array
+          items:
+            $ref: "#/components/schemas/Rule"
+
+    Rule:
+      type: object
+      required: [id, type]
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum:
+            - age
+            - gender
+            - diagnosis
+            - condition
+            - medication
+            - lab_value
+            - flag
+            - custom
+        field:
+          type: string
+          description: Field in patient JSON mapped to this rule, e.g. "age".
+        operator:
+          type: string
+          description: Comparison operator, e.g. >=, <=, between, contains_any.
+        value:
+          nullable: true
+          description: Single value for comparison-based rules.
+        values:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Multiple values for list-based rules.
+        unit:
+          type: string
+          nullable: true
+          description: Unit for numeric values (e.g., "years", "%").
+        confidence:
+          type: string
+          enum: [low, medium, high]
+          description: Confidence in the rule extraction.
+        sourceText:
+          type: string
+          description: Original protocol wording that produced this rule.
+
+    EvaluationRequest:
+      type: object
+      required: [rulesetId, patient]
+      properties:
+        rulesetId:
+          type: string
+        patient:
+          $ref: "#/components/schemas/Patient"
+
+    Patient:
+      type: object
+      required: [patientId]
+      properties:
+        patientId:
+          type: string
+        age:
+          type: number
+        gender:
+          type: string
+          enum: [male, female, other]
+        diagnoses:
+          type: array
+          items:
+            $ref: "#/components/schemas/CodedTerm"
+        medications:
+          type: array
+          items:
+            $ref: "#/components/schemas/CodedTerm"
+        labs:
+          type: array
+          items:
+            $ref: "#/components/schemas/LabResult"
+        flags:
+          type: object
+          additionalProperties:
+            type: boolean
+          description: Boolean flags such as pregnant, onDialysis, etc.
+
+    EvaluationResponse:
+      type: object
+      required: [eligible, passedCriteria, failedCriteria]
+      properties:
+        evaluationId:
+          type: string
+        tenantId:
+          type: string
+        patientId:
+          type: string
+        rulesetId:
+          type: string
+        rulesetVersion:
+          type: integer
+        eligible:
+          type: boolean
+        passedCriteria:
+          type: array
+          items:
+            type: string
+        failedCriteria:
+          type: array
+          items:
+            type: string
+        explanation:
+          type: string
+        evaluatedAtUtc:
+          type: string
+          format: date-time
+
+    CodedTerm:
+      type: object
+      properties:
+        name:
+          type: string
+        codeSystem:
+          type: string
+          description: Coding system, e.g. SNOMED, ICD-10, RxNorm.
+        code:
+          type: string
+        text:
+          type: string
+
+    LabResult:
+      type: object
+      required: [name, value]
+      properties:
+        name:
+          type: string
+        value:
+          type: number
+        unit:
+          type: string
+        collectedAtUtc:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      required: [traceId, status, code, message]
+      properties:
+        traceId:
+          type: string
+          description: Correlation/trace ID for debugging.
+        status:
+          type: integer
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              issue:
+                type: string

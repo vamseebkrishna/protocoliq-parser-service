@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "EvaluationRequest.schema.json",
+  "title": "EvaluationRequest",
+  "description": "Request payload to evaluate patient against a ruleset.",
+  "type": "object",
+  "required": ["rulesetId", "patient"],
+  "properties": {
+    "rulesetId": { "type": "string" },
+    "patient": { "$ref": "Patient.schema.json" }
+  }
+}

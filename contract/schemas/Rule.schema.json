@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "Rule.schema.json",
+  "title": "Rule",
+  "description": "Single eligibility rule extracted from protocol.",
+  "type": "object",
+  "required": ["id", "type"],
+  "properties": {
+    "id": { "type": "string" },
+    "type": {
+      "type": "string",
+      "enum": ["age", "gender", "diagnosis", "condition", "medication", "lab_value", "flag", "custom"]
+    },
+    "field": { "type": "string" },
+    "operator": { "type": "string" },
+    "value": {},
+    "values": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "unit": { "type": "string" },
+    "confidence": {
+      "type": "string",
+      "enum": ["low", "medium", "high"]
+    },
+    "sourceText": { "type": "string" }
+  }
+}

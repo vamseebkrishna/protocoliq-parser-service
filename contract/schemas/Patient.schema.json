@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "Patient.schema.json",
+  "title": "Patient",
+  "description": "Patient data for eligibility evaluation.",
+  "type": "object",
+  "required": ["patientId"],
+  "properties": {
+    "patientId": { "type": "string" },
+    "age": { "type": "number" },
+    "gender": {
+      "type": "string",
+      "enum": ["male", "female", "other"]
+    },
+    "diagnoses": {
+      "type": "array",
+      "items": { "$ref": "CodedTerm.schema.json" }
+    },
+    "medications": {
+      "type": "array",
+      "items": { "$ref": "CodedTerm.schema.json" }
+    },
+    "labs": {
+      "type": "array",
+      "items": { "$ref": "LabResult.schema.json" }
+    },
+    "flags": {
+      "type": "object",
+      "additionalProperties": { "type": "boolean" }
+    }
+  }
+}

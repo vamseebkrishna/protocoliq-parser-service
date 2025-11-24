@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ErrorResponse.schema.json",
+  "title": "ErrorResponse",
+  "description": "Standardized error model used across all endpoints.",
+  "type": "object",
+  "required": ["traceId", "status", "code", "message"],
+  "properties": {
+    "traceId": { "type": "string" },
+    "status": { "type": "integer" },
+    "code": { "type": "string" },
+    "message": { "type": "string" },
+    "details": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "field": { "type": "string" },
+          "issue": { "type": "string" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "CodedTerm.schema.json",
+  "title": "CodedTerm",
+  "description": "Codified terminology such as SNOMED, ICD-10, or RxNorm.",
+  "type": "object",
+  "properties": {
+    "name": { "type": "string" },
+    "codeSystem": { "type": "string" },
+    "code": { "type": "string" },
+    "text": { "type": "string" }
+  }
+}
