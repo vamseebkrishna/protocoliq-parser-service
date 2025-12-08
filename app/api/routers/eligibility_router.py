@@ -1,15 +1,15 @@
-from fastapi import APIRouter
-from app.api.schemas.parse_request import EligibilityParseRequest
-from app.api.schemas.parse_response import EligibilityParseResponse
-from app.application.use_cases.parse_eligibility import ParseEligibilityUseCase
+from fastapi import APIRouter, UploadFile, File
+from app.application.pipelines.eligibility_pipeline import EligibilityPipeline
 
-router = APIRouter(tags=["Eligibility"])
+router = APIRouter()
 
-@router.post("/parse/eligibility", response_model=EligibilityParseResponse)
-def parse_eligibility(request: EligibilityParseRequest):
-    # Import locally to prevent blocking app startup
-    from app.infrastructure.ai.openai_adapter import OpenAIAdapter
+@router.post("/parse/pdf")
+async def parse_pdf(file: UploadFile = File(...)):
+    temp_path = f"/tmp/{file.filename}"
+    with open(temp_path, "wb") as f:
+        f.write(await file.read())
 
-    ai_service = OpenAIAdapter()
-    use_case = ParseEligibilityUseCase(ai_service)
-    return use_case.execute(request)
+    pipeline = EligibilityPipeline()
+    result = pipeline.parse_pdf(temp_path)
+
+    return result
