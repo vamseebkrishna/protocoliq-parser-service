@@ -1,29 +1,34 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "EvaluationResponse.schema.json",
-  "title": "EvaluationResponse",
-  "description": "Eligibility result returned by the engine.",
+  "title": "EligibilityResponse",
   "type": "object",
-  "required": ["eligible", "passedCriteria", "failedCriteria"],
+  "required": ["criteria", "metadata"],
   "properties": {
-    "evaluationId": { "type": "string" },
-    "tenantId": { "type": "string" },
-    "patientId": { "type": "string" },
-    "rulesetId": { "type": "string" },
-    "rulesetVersion": { "type": "integer" },
-    "eligible": { "type": "boolean" },
-    "passedCriteria": {
+    "criteria": {
       "type": "array",
-      "items": { "type": "string" }
+      "items": {
+        "type": "object",
+        "required": ["raw", "type", "normalized", "structuredRule"],
+        "properties": {
+          "criterionId": { "type": ["string", "null"] },
+          "raw": { "type": "string" },
+          "type": {
+            "type": "string",
+            "enum": ["INCLUSION", "EXCLUSION"]
+          },
+          "normalized": { "type": "string" },
+          "structuredRule": { "type": "object" }
+        },
+        "additionalProperties": false
+      }
     },
-    "failedCriteria": {
-      "type": "array",
-      "items": { "type": "string" }
-    },
-    "explanation": { "type": "string" },
-    "evaluatedAtUtc": {
-      "type": "string",
-      "format": "date-time"
+    "metadata": {
+      "type": "object",
+      "required": ["modelVersion"],
+      "properties": {
+        "modelVersion": { "type": "string" }
+      }
     }
-  }
+  },
+  "additionalProperties": false
 }

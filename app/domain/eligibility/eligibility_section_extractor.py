@@ -1,48 +1,77 @@
 import re
 
-
 class EligibilitySectionExtractor:
+    """
+    Extract the Inclusion/Exclusion criteria section from a protocol.
+    Uses multi-stage detection with fallback to avoid false positives.
+    """
 
-    START_KEYWORDS = [
-        r"Eligibility Criteria",
-        r"Inclusion Criteria",
-        r"Study Subjects Criteria",
-        r"7\.1 Inclusion",
-        r"Inclusion/Exclusion"
+    # Common headings used in protocols
+    SECTION_HEADERS = [
+        r"inclusion criteria",
+        r"exclusion criteria"
+        # r"eligibility criteria",
+        # r"study population",
+        # r"subject eligibility",
+        # r"patient eligibility",
+        # r"criteria for participation",
+        # r"entry criteria",
+        # r"screening criteria"
     ]
 
-    END_KEYWORDS = [
-        r"Exclusion Criteria",
-        r"Study Procedures",
-        r"Safety Assessments",
-        r"Intervention",
-        r"Randomization",
-        r"7\.2 Exclusion"
+    # Words likely to appear in REAL criteria
+    CRITERIA_KEYWORDS = [
+        r"age", r"years", r"diagnos", r"consent", r"pregnan",
+        r"liver", r"kidney", r"psychiatr", r"disorder", r"treatment",
+        r"study drug", r"history of", r"no history", r"must", r"may not"
     ]
 
-    @staticmethod
-    def extract_eligibility_section(text: str) -> str:
-        start_positions = [
-            re.search(pattern, text, re.IGNORECASE)
-            for pattern in EligibilitySectionExtractor.START_KEYWORDS
-        ]
+    def extract(self, full_text: str) -> str:
+        if not full_text or len(full_text) < 50:
+            return ""
 
-        start_matches = [m.start() for m in start_positions if m]
-        if not start_matches:
-            raise ValueError("No eligibility section found")
+        text = full_text.lower()
 
-        start_index = min(start_matches)
+        # --------------------
+        # 1. Locate section headings
+        # --------------------
+        matches = []
+        for header in self.SECTION_HEADERS:
+            for m in re.finditer(header, text, flags=re.IGNORECASE):
+                matches.append(m.start())
 
-        # find nearest end
-        end_positions = [
-            re.search(pattern, text[start_index:], re.IGNORECASE)
-            for pattern in EligibilitySectionExtractor.END_KEYWORDS
-        ]
+        if not matches:
+            return ""  # No eligibility section found
 
-        end_matches = [m.start() for m in end_positions if m]
-        if not end_matches:
-            return text[start_index:]  # return rest of doc if no end found
+        # Choose the earliest section header
+        start_index = min(matches)
 
-        end_index = start_index + min(end_matches)
+        # --------------------
+        # 2. Cut the text starting from heading
+        # --------------------
+        tail = text[start_index:]
 
-        return text[start_index:end_index]
+        # --------------------
+        # 3. Stop at the next section heading to avoid capturing entire document
+        # --------------------
+        # Heuristics for major protocol section boundaries
+        next_section_pattern = (
+            r"\n\s*(study design|methodology|treatment plan|statistical|objectives)\b"
+        )
+
+        next_match = re.search(next_section_pattern, tail, flags=re.IGNORECASE)
+        if next_match:
+            tail = tail[: next_match.start()]
+
+        # --------------------
+        # 4. Validate this section looks like real eligibility criteria
+        # --------------------
+        if not any(re.search(kw, tail) for kw in self.CRITERIA_KEYWORDS):
+            return ""  # We found the heading but no real criteria list
+
+        # --------------------
+        # 5. Clean formatting
+        # --------------------
+        cleaned = re.sub(r"\s+", " ", tail).strip()
+
+        return cleaned
